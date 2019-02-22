@@ -11,12 +11,14 @@
 //#include "test/cpucycles.h"
 //#include "fips202.h"
 
-#ifdef DBENCH
-extern const unsigned long long timing_overhead;
-extern unsigned long long * const tshake;
-unsigned long long cpucycles_overhead(void) {
-    unsigned long long t0, t1, overhead = -1;
-    unsigned int i;
+//#ifdef DBENCH
+extern int64_t timing_overhead;
+extern int64_t * const tshake;
+
+int64_t cpucycles_overhead(void)
+{
+    uint64_t t0, t1, overhead = -1;
+    uint32_t i;
     
     for(i = 0; i < 100000; ++i) {
         t0 = cpucycles_start();
@@ -28,7 +30,7 @@ unsigned long long cpucycles_overhead(void) {
     
     return overhead;
 }
-#endif
+//#endif
 
 #define NROUNDS 24
 #define ROL(a, offset) ((a << offset) ^ (a >> (64-offset)))
@@ -38,12 +40,12 @@ unsigned long long cpucycles_overhead(void) {
 *
 * Description: Load 8 bytes into uint64_t in little-endian order
 *
-* Arguments:   - const unsigned char *x: pointer to input byte array
+* Arguments:   - const uint8_t *x: pointer to input byte array
 *
 * Returns the loaded 64-bit unsigned integer
 **************************************************/
-static uint64_t load64(const unsigned char *x) {
-  unsigned int i;
+static uint64_t load64(const uint8_t *x) {
+  uint32_t i;
   uint64_t r = 0;
 
   for (i = 0; i < 8; ++i)
@@ -57,11 +59,11 @@ static uint64_t load64(const unsigned char *x) {
 *
 * Description: Store a 64-bit integer to array of 8 bytes in little-endian order
 *
-* Arguments:   - unsigned char *x: pointer to the output byte array (allocated)
+* Arguments:   - uint8_t *x: pointer to the output byte array (allocated)
 *              - uint64_t u: input 64-bit unsigned integer
 **************************************************/
-static void store64(unsigned char *x, uint64_t u) {
-  unsigned int i;
+static void store64(uint8_t *x, uint64_t u) {
+  uint32_t i;
 
   for(i = 0; i < 8; ++i)
     x[i] = u >> 8*i;
@@ -375,19 +377,19 @@ static void KeccakF1600_StatePermute(uint64_t *state)
 *
 * Arguments:   - uint64_t *s: pointer to (uninitialized) output Keccak state
 *              - unsigned int r: rate in bytes (e.g., 168 for SHAKE128)
-*              - const unsigned char *m: pointer to input to be absorbed into s
-*              - unsigned long long mlen: length of input in bytes
-*              - unsigned char p: domain-separation byte for different
+*              - const uint8_t *m: pointer to input to be absorbed into s
+*              - int32_t mlen: length of input in bytes
+*              - uint8_t p: domain-separation byte for different
 *                                 Keccak-derived functions
 **************************************************/
 static void keccak_absorb(uint64_t *s,
-                          unsigned int r,
-                          const unsigned char *m,
-                          unsigned long long mlen,
-                          unsigned char p)
+                          uint32_t r,
+                          const uint8_t *m,
+                          int32_t mlen,
+                          uint8_t p)
 {
-  unsigned int i;
-  unsigned char t[200];
+  uint32_t i;
+  uint8_t t[200];
   DBENCH_START();
 
   /* Zero state */
@@ -422,18 +424,18 @@ static void keccak_absorb(uint64_t *s,
 *              Modifies the state. Can be called multiple times to keep
 *              squeezing, i.e., is incremental.
 *
-* Arguments:   - unsigned char *h: pointer to output blocks
-*              - unsigned long long int nblocks: number of blocks to be
+* Arguments:   - uint8_t *h: pointer to output blocks
+*              - int32_t int nblocks: number of blocks to be
 *                                                squeezed (written to h)
 *              - uint64_t *s: pointer to input/output Keccak state
-*              - unsigned int r: rate in bytes (e.g., 168 for SHAKE128)
+*              - uint32_t r: rate in bytes (e.g., 168 for SHAKE128)
 **************************************************/
-static void keccak_squeezeblocks(unsigned char *h,
-                                 unsigned long nblocks,
+static void keccak_squeezeblocks(uint8_t *h,
+                                 int32_t nblocks,
                                  uint64_t *s,
-                                 unsigned int r)
+                                 uint32_t r)
 {
-  unsigned int i;
+  uint32_t i;
   DBENCH_START();
 
   while(nblocks > 0) {
@@ -455,13 +457,13 @@ static void keccak_squeezeblocks(unsigned char *h,
 *              non-incremental, starts by zeroeing the state.
 *
 * Arguments:   - uint64_t *s: pointer to (uninitialized) output Keccak state
-*              - const unsigned char *input: pointer to input to be absorbed
+*              - const uint8_t *input: pointer to input to be absorbed
 *                                            into s
-*              - unsigned long long inlen: length of input in bytes
+*              - int32_t inlen: length of input in bytes
 **************************************************/
 void shake128_absorb(uint64_t *s,
-                     const unsigned char *input,
-                     unsigned long long inlen)
+                     const uint8_t *input,
+                     int32_t inlen)
 {
   keccak_absorb(s, SHAKE128_RATE, input, inlen, 0x1F);
 }
@@ -473,13 +475,13 @@ void shake128_absorb(uint64_t *s,
 *              SHAKE128_RATE bytes each. Modifies the state. Can be called
 *              multiple times to keep squeezing, i.e., is incremental.
 *
-* Arguments:   - unsigned char *output: pointer to output blocks
-*              - unsigned long long nblocks: number of blocks to be squeezed
+* Arguments:   - uint8_t *output: pointer to output blocks
+*              - int32_t nblocks: number of blocks to be squeezed
 *                                            (written to output)
 *              - uint64_t *s: pointer to input/output Keccak state
 **************************************************/
-void shake128_squeezeblocks(unsigned char *output,
-                            unsigned long nblocks,
+void shake128_squeezeblocks(uint8_t *output,
+                            int32_t nblocks,
                             uint64_t *s)
 {
   keccak_squeezeblocks(output, nblocks, s, SHAKE128_RATE);
@@ -492,13 +494,13 @@ void shake128_squeezeblocks(unsigned char *output,
 *              non-incremental, starts by zeroeing the state.
 *
 * Arguments:   - uint64_t *s: pointer to (uninitialized) output Keccak state
-*              - const unsigned char *input: pointer to input to be absorbed
+*              - const uint8_t *input: pointer to input to be absorbed
 *                                            into s
-*              - unsigned long long inlen: length of input in bytes
+*              - int32_t inlen: length of input in bytes
 **************************************************/
 void shake256_absorb(uint64_t *s,
-                     const unsigned char *input,
-                     unsigned long long inlen)
+                     const uint8_t *input,
+                     int32_t inlen)
 {
   keccak_absorb(s, SHAKE256_RATE, input, inlen, 0x1F);
 }
@@ -510,13 +512,13 @@ void shake256_absorb(uint64_t *s,
 *              SHAKE256_RATE bytes each. Modifies the state. Can be called
 *              multiple times to keep squeezing, i.e., is incremental.
 *
-* Arguments:   - unsigned char *output: pointer to output blocks
-*              - unsigned long long nblocks: number of blocks to be squeezed
+* Arguments:   - uint8_t *output: pointer to output blocks
+*              - int32_t nblocks: number of blocks to be squeezed
 *                                            (written to output)
 *              - uint64_t *s: pointer to input/output Keccak state
 **************************************************/
-void shake256_squeezeblocks(unsigned char *output,
-                            unsigned long nblocks,
+void shake256_squeezeblocks(uint8_t *output,
+                            int32_t nblocks,
                             uint64_t *s)
 {
   keccak_squeezeblocks(output, nblocks, s, SHAKE256_RATE);
@@ -527,19 +529,18 @@ void shake256_squeezeblocks(unsigned char *output,
 *
 * Description: SHAKE128 XOF with non-incremental API
 *
-* Arguments:   - unsigned char *output: pointer to output
-*              - unsigned long long outlen: requested output length in bytes
-*              - const unsigned char *input: pointer to input
-*              - unsigned long long inlen: length of input in bytes
+* Arguments:   - uint8_t *output: pointer to output
+*              - int32_t outlen: requested output length in bytes
+*              - const uint8_t *input: pointer to input
+*              - int32_t inlen: length of input in bytes
 **************************************************/
-void shake128(unsigned char *output,
-              unsigned long long outlen,
-              const unsigned char *input,
-              unsigned long long inlen)
+void shake128(uint8_t *output,
+              int32_t outlen,
+              const uint8_t *input,
+              int32_t inlen)
 {
-  unsigned int i;
-  unsigned long nblocks = outlen/SHAKE128_RATE;
-  unsigned char t[SHAKE128_RATE];
+  uint32_t i,nblocks = outlen/SHAKE128_RATE;
+  uint8_t t[SHAKE128_RATE];
   uint64_t s[25];
 
   shake128_absorb(s, input, inlen);
@@ -560,19 +561,18 @@ void shake128(unsigned char *output,
 *
 * Description: SHAKE256 XOF with non-incremental API
 *
-* Arguments:   - unsigned char *output: pointer to output
-*              - unsigned long long outlen: requested output length in bytes
-*              - const unsigned char *input: pointer to input
-*              - unsigned long long inlen: length of input in bytes
+* Arguments:   - uint8_t *output: pointer to output
+*              - int32_t outlen: requested output length in bytes
+*              - const uint8_t *input: pointer to input
+*              - int32_t inlen: length of input in bytes
 **************************************************/
-void shake256(unsigned char *output,
-              unsigned long long outlen,
-              const unsigned char *input,
-              unsigned long long inlen)
+void shake256(uint8_t *output,
+              int32_t outlen,
+              const uint8_t *input,
+              int32_t inlen)
 {
-  unsigned int i;
-  unsigned long nblocks = outlen/SHAKE256_RATE;
-  unsigned char t[SHAKE256_RATE];
+  uint32_t i,nblocks = outlen/SHAKE256_RATE;
+  uint8_t t[SHAKE256_RATE];
   uint64_t s[25];
 
   shake256_absorb(s, input, inlen);
@@ -609,7 +609,7 @@ static const uint32_t zetas_inv[N] = {6403635, 846154, 6979993, 4442679, 1362209
 * Arguments:   - uint32_t p[N]: input/output coefficient array
 **************************************************/
 void ntt(uint32_t p[N]) {
-  unsigned int len, start, j, k;
+  uint32_t len, start, j, k;
   uint32_t zeta, t;
 
   k = 1;
@@ -636,7 +636,7 @@ void ntt(uint32_t p[N]) {
 * Arguments:   - uint32_t p[N]: input/output coefficient array
 **************************************************/
 void invntt_frominvmont(uint32_t p[N]) {
-  unsigned int start, len, j, k;
+  uint32_t start, len, j, k;
   uint32_t t, zeta;
   const uint32_t f = (((uint64_t)MONT*MONT % Q) * (Q-1) % Q) * ((Q-1) >> 8) % Q;
 
@@ -667,15 +667,15 @@ void invntt_frominvmont(uint32_t p[N]) {
 *
 * Description: Bit-pack public key pk = (rho, t1).
 *
-* Arguments:   - unsigned char pk[]: output byte array
-*              - const unsigned char rho[]: byte array containing rho
+* Arguments:   - uint8_t pk[]: output byte array
+*              - const uint8_t rho[]: byte array containing rho
 *              - const polyveck *t1: pointer to vector t1
 **************************************************/
-void pack_pk(unsigned char pk[CRYPTO_PUBLICKEYBYTES],
-             const unsigned char rho[SEEDBYTES],
+void pack_pk(uint8_t pk[CRYPTO_PUBLICKEYBYTES],
+             const uint8_t rho[SEEDBYTES],
              const polyveck *t1)
 {
-  unsigned int i;
+  uint32_t i;
 
   for(i = 0; i < SEEDBYTES; ++i)
     pk[i] = rho[i];
@@ -690,15 +690,15 @@ void pack_pk(unsigned char pk[CRYPTO_PUBLICKEYBYTES],
 *
 * Description: Unpack public key pk = (rho, t1).
 *
-* Arguments:   - const unsigned char rho[]: output byte array for rho
+* Arguments:   - const uint8_t rho[]: output byte array for rho
 *              - const polyveck *t1: pointer to output vector t1
-*              - unsigned char pk[]: byte array containing bit-packed pk
+*              - uint8_t pk[]: byte array containing bit-packed pk
 **************************************************/
-void unpack_pk(unsigned char rho[SEEDBYTES],
+void unpack_pk(uint8_t rho[SEEDBYTES],
                polyveck *t1,
-               const unsigned char pk[CRYPTO_PUBLICKEYBYTES])
+               const uint8_t pk[CRYPTO_PUBLICKEYBYTES])
 {
-  unsigned int i;
+  uint32_t i;
 
   for(i = 0; i < SEEDBYTES; ++i)
     rho[i] = pk[i];
@@ -713,23 +713,23 @@ void unpack_pk(unsigned char rho[SEEDBYTES],
 *
 * Description: Bit-pack secret key sk = (rho, key, tr, s1, s2, t0).
 *
-* Arguments:   - unsigned char sk[]: output byte array
-*              - const unsigned char rho[]: byte array containing rho
-*              - const unsigned char key[]: byte array containing key
-*              - const unsigned char tr[]: byte array containing tr
+* Arguments:   - uint8_t sk[]: output byte array
+*              - const uint8_t rho[]: byte array containing rho
+*              - const uint8_t key[]: byte array containing key
+*              - const uint8_t tr[]: byte array containing tr
 *              - const polyvecl *s1: pointer to vector s1
 *              - const polyveck *s2: pointer to vector s2
 *              - const polyveck *t0: pointer to vector t0
 **************************************************/
-void pack_sk(unsigned char sk[CRYPTO_SECRETKEYBYTES],
-             const unsigned char rho[SEEDBYTES],
-             const unsigned char key[SEEDBYTES],
-             const unsigned char tr[CRHBYTES],
+void pack_sk(uint8_t sk[CRYPTO_SECRETKEYBYTES],
+             const uint8_t rho[SEEDBYTES],
+             const uint8_t key[SEEDBYTES],
+             const uint8_t tr[CRHBYTES],
              const polyvecl *s1,
              const polyveck *s2,
              const polyveck *t0)
 {
-  unsigned int i;
+  uint32_t i;
 
   for(i = 0; i < SEEDBYTES; ++i)
     sk[i] = rho[i];
@@ -760,23 +760,23 @@ void pack_sk(unsigned char sk[CRYPTO_SECRETKEYBYTES],
 *
 * Description: Unpack secret key sk = (rho, key, tr, s1, s2, t0).
 *
-* Arguments:   - const unsigned char rho[]: output byte array for rho
-*              - const unsigned char key[]: output byte array for key
-*              - const unsigned char tr[]: output byte array for tr
+* Arguments:   - const uint8_t rho[]: output byte array for rho
+*              - const uint8_t key[]: output byte array for key
+*              - const uint8_t tr[]: output byte array for tr
 *              - const polyvecl *s1: pointer to output vector s1
 *              - const polyveck *s2: pointer to output vector s2
 *              - const polyveck *r0: pointer to output vector t0
-*              - unsigned char sk[]: byte array containing bit-packed sk
+*              - uint8_t sk[]: byte array containing bit-packed sk
 **************************************************/
-void unpack_sk(unsigned char rho[SEEDBYTES],
-               unsigned char key[SEEDBYTES],
-               unsigned char tr[CRHBYTES],
+void unpack_sk(uint8_t rho[SEEDBYTES],
+               uint8_t key[SEEDBYTES],
+               uint8_t tr[CRHBYTES],
                polyvecl *s1,
                polyveck *s2,
                polyveck *t0,
-               const unsigned char sk[CRYPTO_SECRETKEYBYTES])
+               const uint8_t sk[CRYPTO_SECRETKEYBYTES])
 {
-  unsigned int i;
+  uint32_t i;
 
   for(i = 0; i < SEEDBYTES; ++i)
     rho[i] = sk[i];
@@ -807,17 +807,17 @@ void unpack_sk(unsigned char rho[SEEDBYTES],
 *
 * Description: Bit-pack signature sig = (z, h, c).
 *
-* Arguments:   - unsigned char sig[]: output byte array
+* Arguments:   - uint8_t sig[]: output byte array
 *              - const polyvecl *z: pointer to vector z
 *              - const polyveck *h: pointer to hint vector h
 *              - const poly *c: pointer to challenge polynomial
 **************************************************/
-void pack_sig(unsigned char sig[CRYPTO_BYTES],
+void pack_sig(uint8_t sig[CRYPTO_BYTES],
               const polyvecl *z,
               const polyveck *h,
               const poly *c)
 {
-  unsigned int i, j, k;
+  uint32_t i, j, k;
   uint64_t signs, mask;
 
   for(i = 0; i < L; ++i)
@@ -862,7 +862,7 @@ void pack_sig(unsigned char sig[CRYPTO_BYTES],
 * Arguments:   - polyvecl *z: pointer to output vector z
 *              - polyveck *h: pointer to output hint vector h
 *              - poly *c: pointer to output challenge polynomial
-*              - const unsigned char sig[]: byte array containing
+*              - const uint8_t sig[]: byte array containing
 *                bit-packed signature
 *
 * Returns 1 in case of malformed signature; otherwise 0.
@@ -870,9 +870,9 @@ void pack_sig(unsigned char sig[CRYPTO_BYTES],
 int unpack_sig(polyvecl *z,
                polyveck *h,
                poly *c,
-               const unsigned char sig[CRYPTO_BYTES])
+               const uint8_t sig[CRYPTO_BYTES])
 {
-  unsigned int i, j, k;
+  uint32_t i, j, k;
   uint64_t signs, mask;
 
   for(i = 0; i < L; ++i)
@@ -938,8 +938,8 @@ int unpack_sig(polyvecl *z,
 //#include "poly.h"
 
 #ifdef DBENCH
-extern const unsigned long long timing_overhead;
-extern unsigned long long *tred, *tadd, *tmul, *tround, *tsample, *tpack;
+extern const uint64_t timing_overhead;
+extern uint64_t *tred, *tadd, *tmul, *tround, *tsample, *tpack;
 #endif
 
 /*************************************************
@@ -951,7 +951,7 @@ extern unsigned long long *tred, *tadd, *tmul, *tround, *tsample, *tpack;
 * Arguments:   - poly *a: pointer to input/output polynomial
 **************************************************/
 void poly_reduce(poly *a) {
-  unsigned int i;
+  uint32_t i;
   DBENCH_START();
 
   for(i = 0; i < N; ++i)
@@ -969,7 +969,7 @@ void poly_reduce(poly *a) {
 * Arguments:   - poly *a: pointer to input/output polynomial
 **************************************************/
 void poly_csubq(poly *a) {
-  unsigned int i;
+  uint32_t i;
   DBENCH_START();
 
   for(i = 0; i < N; ++i)
@@ -987,7 +987,7 @@ void poly_csubq(poly *a) {
 * Arguments:   - poly *a: pointer to input/output polynomial
 **************************************************/
 void poly_freeze(poly *a) {
-  unsigned int i;
+  uint32_t i;
   DBENCH_START();
 
   for(i = 0; i < N; ++i)
@@ -1006,7 +1006,7 @@ void poly_freeze(poly *a) {
 *              - const poly *b: pointer to second summand
 **************************************************/
 void poly_add(poly *c, const poly *a, const poly *b)  {
-  unsigned int i;
+  uint32_t i;
   DBENCH_START();
 
   for(i = 0; i < N; ++i)
@@ -1028,7 +1028,7 @@ void poly_add(poly *c, const poly *a, const poly *b)  {
 *                               subtraced from first input polynomial
 **************************************************/
 void poly_sub(poly *c, const poly *a, const poly *b) {
-  unsigned int i;
+  uint32_t i;
   DBENCH_START();
 
   for(i = 0; i < N; ++i)
@@ -1046,7 +1046,7 @@ void poly_sub(poly *c, const poly *a, const poly *b) {
 * Arguments:   - poly *a: pointer to input/output polynomial
 **************************************************/
 void poly_neg(poly *a) {
-  unsigned int i;
+  uint32_t i;
   DBENCH_START();
 
   for(i = 0; i < N; ++i)
@@ -1062,10 +1062,10 @@ void poly_neg(poly *a) {
 *              input coefficients to be less than 2^{32-k}.
 *
 * Arguments:   - poly *a: pointer to input/output polynomial
-*              - unsigned int k: exponent
+*              - uint32_t k: exponent
 **************************************************/
-void poly_shiftl(poly *a, unsigned int k) {
-  unsigned int i;
+void poly_shiftl(poly *a, uint32_t k) {
+  uint32_t i;
   DBENCH_START();
 
   for(i = 0; i < N; ++i)
@@ -1119,7 +1119,7 @@ void poly_invntt_montgomery(poly *a) {
 *              - const poly *b: pointer to second input polynomial
 **************************************************/
 void poly_pointwise_invmontgomery(poly *c, const poly *a, const poly *b) {
-  unsigned int i;
+  uint32_t i;
   DBENCH_START();
 
   for(i = 0; i < N; ++i)
@@ -1141,7 +1141,7 @@ void poly_pointwise_invmontgomery(poly *c, const poly *a, const poly *b) {
 *              - const poly *v: pointer to input polynomial
 **************************************************/
 void poly_power2round(poly *a1, poly *a0, const poly *a) {
-  unsigned int i;
+  uint32_t i;
   DBENCH_START();
 
   for(i = 0; i < N; ++i)
@@ -1164,7 +1164,7 @@ void poly_power2round(poly *a1, poly *a0, const poly *a) {
 *              - const poly *c: pointer to input polynomial
 **************************************************/
 void poly_decompose(poly *a1, poly *a0, const poly *a) {
-  unsigned int i;
+  uint32_t i;
   DBENCH_START();
 
   for(i = 0; i < N; ++i)
@@ -1187,8 +1187,8 @@ void poly_decompose(poly *a1, poly *a0, const poly *a) {
 *
 * Returns number of 1 bits.
 **************************************************/
-unsigned int poly_make_hint(poly *h, const poly *a, const poly *b) {
-  unsigned int i, s = 0;
+uint32_t poly_make_hint(poly *h, const poly *a, const poly *b) {
+  uint32_t i, s = 0;
   DBENCH_START();
 
   for(i = 0; i < N; ++i) {
@@ -1210,7 +1210,7 @@ unsigned int poly_make_hint(poly *h, const poly *a, const poly *b) {
 *              - const poly *h: pointer to input hint polynomial
 **************************************************/
 void poly_use_hint(poly *a, const poly *b, const poly *h) {
-  unsigned int i;
+  uint32_t i;
   DBENCH_START();
 
   for(i = 0; i < N; ++i)
@@ -1231,7 +1231,7 @@ void poly_use_hint(poly *a, const poly *b, const poly *h) {
 * Returns 0 if norm is strictly smaller than B and 1 otherwise.
 **************************************************/
 int poly_chknorm(const poly *a, uint32_t B) {
-  unsigned int i;
+  uint32_t i;
   int32_t t;
   DBENCH_START();
 
@@ -1262,10 +1262,10 @@ int poly_chknorm(const poly *a, uint32_t B) {
 *              5*SHAKE128_RATE bytes).
 *
 * Arguments:   - poly *a: pointer to output polynomial
-*              - const unsigned char *buf: array of random bytes
+*              - const uint8_t *buf: array of random bytes
 **************************************************/
-void poly_uniform(poly *a, const unsigned char *buf) {
-  unsigned int ctr, pos;
+void poly_uniform(poly *a, const uint8_t *buf) {
+  uint32_t ctr, pos;
   uint32_t t;
   DBENCH_START();
 
@@ -1290,23 +1290,23 @@ void poly_uniform(poly *a, const unsigned char *buf) {
 *              performing rejection sampling using array of random bytes.
 *
 * Arguments:   - uint32_t *a: pointer to output array (allocated)
-*              - unsigned int len: number of coefficients to be sampled
-*              - const unsigned char *buf: array of random bytes
-*              - unsigned int buflen: length of array of random bytes
+*              - uint32_t len: number of coefficients to be sampled
+*              - const uint8_t *buf: array of random bytes
+*              - uint32_t buflen: length of array of random bytes
 *
 * Returns number of sampled coefficients. Can be smaller than len if not enough
 * random bytes were given.
 **************************************************/
-static unsigned int rej_eta(uint32_t *a,
-                            unsigned int len,
-                            const unsigned char *buf,
-                            unsigned int buflen)
+static uint32_t rej_eta(uint32_t *a,
+                            uint32_t len,
+                            const uint8_t *buf,
+                            uint32_t buflen)
 {
 #if ETA > 7
 #error "rej_eta() assumes ETA <= 7"
 #endif
-  unsigned int ctr, pos;
-  unsigned char t0, t1;
+  uint32_t ctr, pos;
+  uint8_t t0, t1;
   DBENCH_START();
 
   ctr = pos = 0;
@@ -1337,19 +1337,19 @@ static unsigned int rej_eta(uint32_t *a,
 *              output stream from SHAKE256(seed|nonce).
 *
 * Arguments:   - poly *a: pointer to output polynomial
-*              - const unsigned char seed[]: byte array with seed of length
+*              - const uint8_t seed[]: byte array with seed of length
 *                                            SEEDBYTES
-*              - unsigned char nonce: nonce byte
+*              - uint8_t nonce: nonce byte
 **************************************************/
 void poly_uniform_eta(poly *a,
-                      const unsigned char seed[SEEDBYTES],
-                      unsigned char nonce)
+                      const uint8_t seed[SEEDBYTES],
+                      uint8_t nonce)
 {
-  unsigned int i, ctr;
-  unsigned char inbuf[SEEDBYTES + 1];
+  uint32_t i, ctr;
+  uint8_t inbuf[SEEDBYTES + 1];
   /* Probability that we need more than 2 blocks: < 2^{-84}
      Probability that we need more than 3 blocks: < 2^{-352} */
-  unsigned char outbuf[2*SHAKE256_RATE];
+  uint8_t outbuf[2*SHAKE256_RATE];
   uint64_t state[25];
 
   for(i= 0; i < SEEDBYTES; ++i)
@@ -1374,22 +1374,22 @@ void poly_uniform_eta(poly *a,
 *              using array of random bytes.
 *
 * Arguments:   - uint32_t *a: pointer to output array (allocated)
-*              - unsigned int len: number of coefficients to be sampled
-*              - const unsigned char *buf: array of random bytes
-*              - unsigned int buflen: length of array of random bytes
+*              - uint32_t len: number of coefficients to be sampled
+*              - const uint8_t *buf: array of random bytes
+*              - uint32_t buflen: length of array of random bytes
 *
 * Returns number of sampled coefficients. Can be smaller than len if not enough
 * random bytes were given.
 **************************************************/
-static unsigned int rej_gamma1m1(uint32_t *a,
-                                 unsigned int len,
-                                 const unsigned char *buf,
-                                 unsigned int buflen)
+static uint32_t rej_gamma1m1(uint32_t *a,
+                                 uint32_t len,
+                                 const uint8_t *buf,
+                                 uint32_t buflen)
 {
 #if GAMMA1 > (1 << 19)
 #error "rej_gamma1m1() assumes GAMMA1 - 1 fits in 19 bits"
 #endif
-  unsigned int ctr, pos;
+  uint32_t ctr, pos;
   uint32_t t0, t1;
   DBENCH_START();
 
@@ -1424,19 +1424,19 @@ static unsigned int rej_gamma1m1(uint32_t *a,
 *              sampling on output stream of SHAKE256(seed|nonce).
 *
 * Arguments:   - poly *a: pointer to output polynomial
-*              - const unsigned char seed[]: byte array with seed of length
+*              - const uint8_t seed[]: byte array with seed of length
 *                                            SEEDBYTES + CRHBYTES
 *              - uint16_t nonce: 16-bit nonce
 **************************************************/
 void poly_uniform_gamma1m1(poly *a,
-                           const unsigned char seed[SEEDBYTES + CRHBYTES],
+                           const uint8_t seed[SEEDBYTES + CRHBYTES],
                            uint16_t nonce)
 {
-  unsigned int i, ctr;
-  unsigned char inbuf[SEEDBYTES + CRHBYTES + 2];
+  uint32_t i, ctr;
+  uint8_t inbuf[SEEDBYTES + CRHBYTES + 2];
   /* Probability that we need more than 5 blocks: < 2^{-81}
      Probability that we need more than 6 blocks: < 2^{-467} */
-  unsigned char outbuf[5*SHAKE256_RATE];
+  uint8_t outbuf[5*SHAKE256_RATE];
   uint64_t state[25];
 
   for(i = 0; i < SEEDBYTES + CRHBYTES; ++i)
@@ -1462,16 +1462,16 @@ void poly_uniform_gamma1m1(poly *a,
 * Description: Bit-pack polynomial with coefficients in [-ETA,ETA].
 *              Input coefficients are assumed to lie in [Q-ETA,Q+ETA].
 *
-* Arguments:   - unsigned char *r: pointer to output byte array with at least
+* Arguments:   - uint8_t *r: pointer to output byte array with at least
 *                                  POLETA_SIZE_PACKED bytes
 *              - const poly *a: pointer to input polynomial
 **************************************************/
-void polyeta_pack(unsigned char *r, const poly *a) {
+void polyeta_pack(uint8_t *r, const poly *a) {
 #if ETA > 7
 #error "polyeta_pack() assumes ETA <= 7"
 #endif
-  unsigned int i;
-  unsigned char t[8];
+  uint32_t i;
+  uint8_t t[8];
   DBENCH_START();
 
 #if ETA <= 3
@@ -1514,10 +1514,10 @@ void polyeta_pack(unsigned char *r, const poly *a) {
 *              Output coefficients lie in [Q-ETA,Q+ETA].
 *
 * Arguments:   - poly *r: pointer to output polynomial
-*              - const unsigned char *a: byte array with bit-packed polynomial
+*              - const uint8_t *a: byte array with bit-packed polynomial
 **************************************************/
-void polyeta_unpack(poly *r, const unsigned char *a) {
-  unsigned int i;
+void polyeta_unpack(poly *r, const uint8_t *a) {
+  uint32_t i;
   DBENCH_START();
 
 #if ETA <= 3
@@ -1558,15 +1558,15 @@ void polyeta_unpack(poly *r, const unsigned char *a) {
 * Description: Bit-pack polynomial t1 with coefficients fitting in 9 bits.
 *              Input coefficients are assumed to be standard representatives.
 *
-* Arguments:   - unsigned char *r: pointer to output byte array with at least
+* Arguments:   - uint8_t *r: pointer to output byte array with at least
 *                                  POLT1_SIZE_PACKED bytes
 *              - const poly *a: pointer to input polynomial
 **************************************************/
-void polyt1_pack(unsigned char *r, const poly *a) {
+void polyt1_pack(uint8_t *r, const poly *a) {
 #if D != 14
 #error "polyt1_pack() assumes D == 14"
 #endif
-  unsigned int i;
+  uint32_t i;
   DBENCH_START();
 
   for(i = 0; i < N/8; ++i) {
@@ -1591,10 +1591,10 @@ void polyt1_pack(unsigned char *r, const poly *a) {
 *              Output coefficients are standard representatives.
 *
 * Arguments:   - poly *r: pointer to output polynomial
-*              - const unsigned char *a: byte array with bit-packed polynomial
+*              - const uint8_t *a: byte array with bit-packed polynomial
 **************************************************/
-void polyt1_unpack(poly *r, const unsigned char *a) {
-  unsigned int i;
+void polyt1_unpack(poly *r, const uint8_t *a) {
+  uint32_t i;
   DBENCH_START();
 
   for(i = 0; i < N/8; ++i) {
@@ -1617,12 +1617,12 @@ void polyt1_unpack(poly *r, const unsigned char *a) {
 * Description: Bit-pack polynomial t0 with coefficients in ]-2^{D-1}, 2^{D-1}].
 *              Input coefficients are assumed to lie in ]Q-2^{D-1}, Q+2^{D-1}].
 *
-* Arguments:   - unsigned char *r: pointer to output byte array with at least
+* Arguments:   - uint8_t *r: pointer to output byte array with at least
 *                                  POLT0_SIZE_PACKED bytes
 *              - const poly *a: pointer to input polynomial
 **************************************************/
-void polyt0_pack(unsigned char *r, const poly *a) {
-  unsigned int i;
+void polyt0_pack(uint8_t *r, const poly *a) {
+  uint32_t i;
   uint32_t t[4];
   DBENCH_START();
 
@@ -1654,10 +1654,10 @@ void polyt0_pack(unsigned char *r, const poly *a) {
 *              Output coefficients lie in ]Q-2^{D-1},Q+2^{D-1}].
 *
 * Arguments:   - poly *r: pointer to output polynomial
-*              - const unsigned char *a: byte array with bit-packed polynomial
+*              - const uint8_t *a: byte array with bit-packed polynomial
 **************************************************/
-void polyt0_unpack(poly *r, const unsigned char *a) {
-  unsigned int i;
+void polyt0_unpack(poly *r, const uint8_t *a) {
+  uint32_t i;
   DBENCH_START();
 
   for(i = 0; i < N/4; ++i) {
@@ -1691,15 +1691,15 @@ void polyt0_unpack(poly *r, const unsigned char *a) {
 *              in [-(GAMMA1 - 1), GAMMA1 - 1].
 *              Input coefficients are assumed to be standard representatives.
 *
-* Arguments:   - unsigned char *r: pointer to output byte array with at least
+* Arguments:   - uint8_t *r: pointer to output byte array with at least
 *                                  POLZ_SIZE_PACKED bytes
 *              - const poly *a: pointer to input polynomial
 **************************************************/
-void polyz_pack(unsigned char *r, const poly *a) {
+void polyz_pack(uint8_t *r, const poly *a) {
 #if GAMMA1 > (1 << 19)
 #error "polyz_pack() assumes GAMMA1 <= 2^{19}"
 #endif
-  unsigned int i;
+  uint32_t i;
   uint32_t t[2];
   DBENCH_START();
 
@@ -1729,10 +1729,10 @@ void polyz_pack(unsigned char *r, const poly *a) {
 *              Output coefficients are standard representatives.
 *
 * Arguments:   - poly *r: pointer to output polynomial
-*              - const unsigned char *a: byte array with bit-packed polynomial
+*              - const uint8_t *a: byte array with bit-packed polynomial
 **************************************************/
-void polyz_unpack(poly *r, const unsigned char *a) {
-  unsigned int i;
+void polyz_unpack(poly *r, const uint8_t *a) {
+  uint32_t i;
   DBENCH_START();
 
   for(i = 0; i < N/2; ++i) {
@@ -1759,12 +1759,12 @@ void polyz_unpack(poly *r, const unsigned char *a) {
 * Description: Bit-pack polynomial w1 with coefficients in [0, 15].
 *              Input coefficients are assumed to be standard representatives.
 *
-* Arguments:   - unsigned char *r: pointer to output byte array with at least
+* Arguments:   - uint8_t *r: pointer to output byte array with at least
 *                                  POLW1_SIZE_PACKED bytes
 *              - const poly *a: pointer to input polynomial
 **************************************************/
-void polyw1_pack(unsigned char *r, const poly *a) {
-  unsigned int i;
+void polyw1_pack(uint8_t *r, const poly *a) {
+  uint32_t i;
   DBENCH_START();
 
   for(i = 0; i < N/2; ++i)
@@ -1790,7 +1790,7 @@ void polyw1_pack(unsigned char *r, const poly *a) {
 * Arguments:   - polyvecl *v: pointer to input/output vector
 **************************************************/
 void polyvecl_freeze(polyvecl *v) {
-  unsigned int i;
+  uint32_t i;
 
   for(i = 0; i < L; ++i)
     poly_freeze(v->vec+i);
@@ -1807,7 +1807,7 @@ void polyvecl_freeze(polyvecl *v) {
 *              - const polyvecl *v: pointer to second summand
 **************************************************/
 void polyvecl_add(polyvecl *w, const polyvecl *u, const polyvecl *v) {
-  unsigned int i;
+  uint32_t i;
 
   for(i = 0; i < L; ++i)
     poly_add(w->vec+i, u->vec+i, v->vec+i);
@@ -1822,7 +1822,7 @@ void polyvecl_add(polyvecl *w, const polyvecl *u, const polyvecl *v) {
 * Arguments:   - polyvecl *v: pointer to input/output vector
 **************************************************/
 void polyvecl_ntt(polyvecl *v) {
-  unsigned int i;
+  uint32_t i;
 
   for(i = 0; i < L; ++i)
     poly_ntt(v->vec+i);
@@ -1845,7 +1845,7 @@ void polyvecl_pointwise_acc_invmontgomery(poly *w,
                                           const polyvecl *u,
                                           const polyvecl *v)
 {
-  unsigned int i;
+  uint32_t i;
   poly t;
 
   poly_pointwise_invmontgomery(w, u->vec+0, v->vec+0);
@@ -1869,7 +1869,7 @@ void polyvecl_pointwise_acc_invmontgomery(poly *w,
 * otherwise.
 **************************************************/
 int polyvecl_chknorm(const polyvecl *v, uint32_t bound)  {
-  unsigned int i;
+  uint32_t i;
   int ret = 0;
 
   for(i = 0; i < L; ++i)
@@ -1892,7 +1892,7 @@ int polyvecl_chknorm(const polyvecl *v, uint32_t bound)  {
 * Arguments:   - polyveck *v: pointer to input/output vector
 **************************************************/
 void polyveck_reduce(polyveck *v) {
-  unsigned int i;
+  uint32_t i;
 
   for(i = 0; i < K; ++i)
     poly_reduce(v->vec+i);
@@ -1907,7 +1907,7 @@ void polyveck_reduce(polyveck *v) {
 * Arguments:   - polyveck *v: pointer to input/output vector
 **************************************************/
 void polyveck_csubq(polyveck *v) {
-  unsigned int i;
+  uint32_t i;
 
   for(i = 0; i < K; ++i)
     poly_csubq(v->vec+i);
@@ -1922,7 +1922,7 @@ void polyveck_csubq(polyveck *v) {
 * Arguments:   - polyveck *v: pointer to input/output vector
 **************************************************/
 void polyveck_freeze(polyveck *v)  {
-  unsigned int i;
+  uint32_t i;
 
   for(i = 0; i < K; ++i)
     poly_freeze(v->vec+i);
@@ -1939,7 +1939,7 @@ void polyveck_freeze(polyveck *v)  {
 *              - const polyveck *v: pointer to second summand
 **************************************************/
 void polyveck_add(polyveck *w, const polyveck *u, const polyveck *v) {
-  unsigned int i;
+  uint32_t i;
 
   for(i = 0; i < K; ++i)
     poly_add(w->vec+i, u->vec+i, v->vec+i);
@@ -1958,7 +1958,7 @@ void polyveck_add(polyveck *w, const polyveck *u, const polyveck *v) {
 *                                   subtracted from first input vector
 **************************************************/
 void polyveck_sub(polyveck *w, const polyveck *u, const polyveck *v) {
-  unsigned int i;
+  uint32_t i;
 
   for(i = 0; i < K; ++i)
     poly_sub(w->vec+i, u->vec+i, v->vec+i);
@@ -1971,10 +1971,10 @@ void polyveck_sub(polyveck *w, const polyveck *u, const polyveck *v) {
 *              reduction. Assumes input coefficients to be less than 2^{32-k}.
 *
 * Arguments:   - polyveck *v: pointer to input/output vector
-*              - unsigned int k: exponent
+*              - uint32_t k: exponent
 **************************************************/
-void polyveck_shiftl(polyveck *v, unsigned int k) {
-  unsigned int i;
+void polyveck_shiftl(polyveck *v, uint32_t k) {
+  uint32_t i;
 
   for(i = 0; i < K; ++i)
     poly_shiftl(v->vec+i, k);
@@ -1989,7 +1989,7 @@ void polyveck_shiftl(polyveck *v, unsigned int k) {
 * Arguments:   - polyveck *v: pointer to input/output vector
 **************************************************/
 void polyveck_ntt(polyveck *v) {
-  unsigned int i;
+  uint32_t i;
 
   for(i = 0; i < K; ++i)
     poly_ntt(v->vec+i);
@@ -2005,7 +2005,7 @@ void polyveck_ntt(polyveck *v) {
 * Arguments:   - polyveck *v: pointer to input/output vector
 **************************************************/
 void polyveck_invntt_montgomery(polyveck *v) {
-  unsigned int i;
+  uint32_t i;
 
   for(i = 0; i < K; ++i)
     poly_invntt_montgomery(v->vec+i);
@@ -2024,7 +2024,7 @@ void polyveck_invntt_montgomery(polyveck *v) {
 * otherwise.
 **************************************************/
 int polyveck_chknorm(const polyveck *v, uint32_t bound) {
-  unsigned int i;
+  uint32_t i;
   int ret = 0;
 
   for(i = 0; i < K; ++i)
@@ -2048,7 +2048,7 @@ int polyveck_chknorm(const polyveck *v, uint32_t bound) {
 *              - const polyveck *v: pointer to input vector
 **************************************************/
 void polyveck_power2round(polyveck *v1, polyveck *v0, const polyveck *v) {
-  unsigned int i;
+  uint32_t i;
 
   for(i = 0; i < K; ++i)
     poly_power2round(v1->vec+i, v0->vec+i, v->vec+i);
@@ -2070,7 +2070,7 @@ void polyveck_power2round(polyveck *v1, polyveck *v0, const polyveck *v) {
 *              - const polyveck *v: pointer to input vector
 **************************************************/
 void polyveck_decompose(polyveck *v1, polyveck *v0, const polyveck *v) {
-  unsigned int i;
+  uint32_t i;
 
   for(i = 0; i < K; ++i)
     poly_decompose(v1->vec+i, v0->vec+i, v->vec+i);
@@ -2087,11 +2087,11 @@ void polyveck_decompose(polyveck *v1, polyveck *v0, const polyveck *v) {
 *
 * Returns number of 1 bits.
 **************************************************/
-unsigned int polyveck_make_hint(polyveck *h,
+uint32_t polyveck_make_hint(polyveck *h,
                                 const polyveck *u,
                                 const polyveck *v)
 {
-  unsigned int i, s = 0;
+  uint32_t i, s = 0;
 
   for(i = 0; i < K; ++i)
     s += poly_make_hint(h->vec+i, u->vec+i, v->vec+i);
@@ -2110,7 +2110,7 @@ unsigned int polyveck_make_hint(polyveck *h,
 *              - const polyveck *h: pointer to input hint vector
 **************************************************/
 void polyveck_use_hint(polyveck *w, const polyveck *u, const polyveck *h) {
-  unsigned int i;
+  uint32_t i;
 
   for(i = 0; i < K; ++i)
     poly_use_hint(w->vec+i, u->vec+i, h->vec+i);
@@ -2269,7 +2269,7 @@ uint32_t decompose(uint32_t a, uint32_t *a0) {
 *
 * Returns 1 if high bits of a and b differ and 0 otherwise.
 **************************************************/
-unsigned int make_hint(const uint32_t a, const uint32_t b) {
+uint32_t make_hint(const uint32_t a, const uint32_t b) {
   uint32_t t;
 
   return decompose(a, &t) != decompose(b, &t);
@@ -2281,11 +2281,11 @@ unsigned int make_hint(const uint32_t a, const uint32_t b) {
 * Description: Correct high bits according to hint.
 *
 * Arguments:   - uint32_t a: input element
-*              - unsigned int hint: hint bit
+*              - uint32_t hint: hint bit
 *
 * Returns corrected high bits.
 **************************************************/
-uint32_t use_hint(const uint32_t a, const unsigned int hint) {
+uint32_t use_hint(const uint32_t a, const uint32_t hint) {
   uint32_t a0, a1;
 
   a1 = decompose(a, &a0);
@@ -2314,6 +2314,50 @@ uint32_t use_hint(const uint32_t a, const unsigned int hint) {
 //#include "polyvec.h"
 //#include "packing.h"
 
+#ifdef _WIN32
+#include <wincrypt.h>
+void randombytes(unsigned char *x,long xlen)
+{
+    HCRYPTPROV prov = 0;
+    CryptAcquireContextW(&prov, NULL, NULL,PROV_RSA_FULL, CRYPT_VERIFYCONTEXT | CRYPT_SILENT);
+    CryptGenRandom(prov, xlen, x);
+    CryptReleaseContext(prov, 0);
+}
+#else
+#include <stdio.h>
+#include <unistd.h>
+#include <fcntl.h>
+void randombytes(unsigned char *x,long xlen)
+{
+    static int fd = -1;
+    int32_t i;
+    if (fd == -1) {
+        for (;;) {
+            fd = open("/dev/urandom",O_RDONLY);
+            if (fd != -1) break;
+            sleep(1);
+        }
+    }
+    while (xlen > 0) {
+        if (xlen < 1048576) i = (int32_t)xlen; else i = 1048576;
+        i = (int32_t)read(fd,x,i);
+        if (i < 1) {
+            sleep(1);
+            continue;
+        }
+        if ( 0 )
+        {
+            int32_t j;
+            for (j=0; j<i; j++)
+                printf("%02x ",x[j]);
+            printf("-> %p\n",x);
+        }
+        x += i;
+        xlen -= i;
+    }
+}
+#endif
+
 /*************************************************
 * Name:        expand_mat
 *
@@ -2322,16 +2366,16 @@ uint32_t use_hint(const uint32_t a, const unsigned int hint) {
 *              sampling on the output stream of SHAKE128(rho|i|j).
 *
 * Arguments:   - polyvecl mat[K]: output matrix
-*              - const unsigned char rho[]: byte array containing seed rho
+*              - const uint8_t rho[]: byte array containing seed rho
 **************************************************/
-void expand_mat(polyvecl mat[K], const unsigned char rho[SEEDBYTES]) {
-  unsigned int i, j;
-  unsigned char inbuf[SEEDBYTES + 1];
+void expand_mat(polyvecl mat[K], const uint8_t rho[SEEDBYTES]) {
+  uint32_t i, j;
+  uint8_t inbuf[SEEDBYTES + 1];
   /* Don't change this to smaller values,
    * sampling later assumes sufficient SHAKE output!
    * Probability that we need more than 5 blocks: < 2^{-132}.
    * Probability that we need more than 6 blocks: < 2^{-546}. */
-  unsigned char outbuf[5*SHAKE128_RATE];
+  uint8_t outbuf[5*SHAKE128_RATE];
 
   for(i = 0; i < SEEDBYTES; ++i)
     inbuf[i] = rho[i];
@@ -2353,16 +2397,16 @@ void expand_mat(polyvecl mat[K], const unsigned char rho[SEEDBYTES]) {
 *              SHAKE256(mu|w1).
 *
 * Arguments:   - poly *c: pointer to output polynomial
-*              - const unsigned char mu[]: byte array containing mu
+*              - const uint8_t mu[]: byte array containing mu
 *              - const polyveck *w1: pointer to vector w1
 **************************************************/
 void challenge(poly *c,
-               const unsigned char mu[CRHBYTES],
+               const uint8_t mu[CRHBYTES],
                const polyveck *w1)
 {
-  unsigned int i, b, pos;
-  unsigned char inbuf[CRHBYTES + K*POLW1_SIZE_PACKED];
-  unsigned char outbuf[SHAKE256_RATE];
+  uint32_t i, b, pos;
+  uint8_t inbuf[CRHBYTES + K*POLW1_SIZE_PACKED];
+  uint8_t outbuf[SHAKE256_RATE];
   uint64_t state[25], signs, mask;
 
   for(i = 0; i < CRHBYTES; ++i)
@@ -2400,22 +2444,22 @@ void challenge(poly *c,
 }
 
 /*************************************************
-* Name:        crypto_sign_keypair
+* Name:        dilithium_keypair
 *
 * Description: Generates public and private key.
 *
-* Arguments:   - unsigned char *pk: pointer to output public key (allocated
+* Arguments:   - uint8_t *pk: pointer to output public key (allocated
 *                                   array of CRYPTO_PUBLICKEYBYTES bytes)
-*              - unsigned char *sk: pointer to output private key (allocated
+*              - uint8_t *sk: pointer to output private key (allocated
 *                                   array of CRYPTO_SECRETKEYBYTES bytes)
 *
 * Returns 0 (success)
 **************************************************/
-int crypto_sign_keypair(unsigned char *pk, unsigned char *sk) {
-  unsigned int i;
-  unsigned char seedbuf[3*SEEDBYTES];
-  unsigned char tr[CRHBYTES];
-  unsigned char *rho, *rhoprime, *key;
+int dilithium_keypair(uint8_t *pk, uint8_t *sk) {
+  uint32_t i;
+  uint8_t seedbuf[3*SEEDBYTES];
+  uint8_t tr[CRHBYTES];
+  uint8_t *rho, *rhoprime, *key;
   uint16_t nonce = 0;
   polyvecl mat[K];
   polyvecl s1, s1hat;
@@ -2462,32 +2506,32 @@ int crypto_sign_keypair(unsigned char *pk, unsigned char *sk) {
 }
 
 /*************************************************
-* Name:        crypto_sign
+* Name:        dilithium_sign
 *
 * Description: Compute signed message.
 *
-* Arguments:   - unsigned char *sm: pointer to output signed message (allocated
+* Arguments:   - uint8_t *sm: pointer to output signed message (allocated
 *                                   array with CRYPTO_BYTES + mlen bytes),
 *                                   can be equal to m
-*              - unsigned long long *smlen: pointer to output length of signed
+*              - int32_t *smlen: pointer to output length of signed
 *                                           message
-*              - const unsigned char *m: pointer to message to be signed
-*              - unsigned long long mlen: length of message
-*              - const unsigned char *sk: pointer to bit-packed secret key
+*              - const uint8_t *m: pointer to message to be signed
+*              - int32_t mlen: length of message
+*              - const uint8_t *sk: pointer to bit-packed secret key
 *
 * Returns 0 (success)
 **************************************************/
-int crypto_sign(unsigned char *sm,
-                unsigned long long *smlen,
-                const unsigned char *m,
-                unsigned long long mlen,
-                const unsigned char *sk)
+int dilithium_sign(uint8_t *sm,
+                int32_t *smlen,
+                const uint8_t *m,
+                int32_t mlen,
+                const uint8_t *sk)
 {
-  unsigned long long i, j;
-  unsigned int n;
-  unsigned char seedbuf[2*SEEDBYTES + CRHBYTES]; // TODO: nonce in seedbuf (2x)
-  unsigned char tr[CRHBYTES];
-  unsigned char *rho, *key, *mu;
+  int32_t i, j;
+  uint32_t n;
+  uint8_t seedbuf[2*SEEDBYTES + CRHBYTES]; // TODO: nonce in seedbuf (2x)
+  uint8_t tr[CRHBYTES];
+  uint8_t *rho, *key, *mu;
   uint16_t nonce = 0;
   poly c, chat;
   polyvecl mat[K], s1, y, yhat, z;
@@ -2587,28 +2631,28 @@ int crypto_sign(unsigned char *sm,
 }
 
 /*************************************************
-* Name:        crypto_sign_open
+* Name:        dilithium_verify
 *
 * Description: Verify signed message.
 *
-* Arguments:   - unsigned char *m: pointer to output message (allocated
+* Arguments:   - uint8_t *m: pointer to output message (allocated
 *                                  array with smlen bytes), can be equal to sm
-*              - unsigned long long *mlen: pointer to output length of message
-*              - const unsigned char *sm: pointer to signed message
-*              - unsigned long long smlen: length of signed message
-*              - const unsigned char *pk: pointer to bit-packed public key
+*              - int32_t *mlen: pointer to output length of message
+*              - const uint8_t *sm: pointer to signed message
+*              - int32_t smlen: length of signed message
+*              - const uint8_t *pk: pointer to bit-packed public key
 *
 * Returns 0 if signed message could be verified correctly and -1 otherwise
 **************************************************/
-int crypto_sign_open(unsigned char *m,
-                     unsigned long long *mlen,
-                     const unsigned char *sm,
-                     unsigned long long smlen,
-                     const unsigned char *pk)
+int dilithium_verify(uint8_t *m,
+                     int32_t *mlen,
+                     const uint8_t *sm,
+                     int32_t smlen,
+                     const uint8_t *pk)
 {
-  unsigned long long i;
-  unsigned char rho[SEEDBYTES];
-  unsigned char mu[CRHBYTES];
+  int32_t i;
+  uint8_t rho[SEEDBYTES];
+  uint8_t mu[CRHBYTES];
   poly c, chat, cp;
   polyvecl mat[K], z;
   polyveck t1, w1, h, tmp1, tmp2;
@@ -2657,19 +2701,156 @@ int crypto_sign_open(unsigned char *m,
   challenge(&cp, mu, &w1);
   for(i = 0; i < N; ++i)
     if(c.coeffs[i] != cp.coeffs[i])
-      goto badsig;
+    {
+        /* Signature verification failed */
+    badsig:
+        *mlen = (int32_t) -1;
+        for(i = 0; i < smlen; ++i)
+            m[i] = 0;
+        
+        return -1;
+    }
 
   /* All good, copy msg, return 0 */
   for(i = 0; i < *mlen; ++i)
     m[i] = sm[CRYPTO_BYTES + i];
-
   return 0;
+}
 
-  /* Signature verification failed */
-  badsig:
-  *mlen = (unsigned long long) -1;
-  for(i = 0; i < smlen; ++i)
-    m[i] = 0;
+///////////////////////////////////////////////////////////////////////////////
+#include <stdio.h>
+#include <stdlib.h>
 
-  return -1;
+#define MLEN 59
+#define NTESTS 5000
+
+int64_t timing_overhead;
+#ifdef DBENCH
+int64_t *tred, *tadd, *tmul, *tround, *tsample, *tpack, *tshake;
+#endif
+
+static int cmp_llu(const void *a, const void*b)
+{
+    if(*(int64_t *)a < *(int64_t *)b) return -1;
+    if(*(int64_t *)a > *(int64_t *)b) return 1;
+    return 0;
+}
+
+static int64_t median(int64_t *l, size_t llen)
+{
+    qsort(l,llen,sizeof(uint64_t),cmp_llu);
+    
+    if(llen%2) return l[llen/2];
+    else return (l[llen/2-1]+l[llen/2])/2;
+}
+
+static int64_t average(int64_t *t, size_t tlen)
+{
+    uint64_t acc=0;
+    size_t i;
+    for(i=0;i<tlen;i++)
+        acc += t[i];
+    return acc/(tlen);
+}
+
+static void print_results(const char *s, int64_t *t, size_t tlen)
+{
+    size_t i;
+    printf("%s", s);
+    for(i=0;i<tlen-1;i++)
+    {
+        t[i] = t[i+1] - t[i];
+        fprintf(stderr,"%lld ", t[i]);
+    }
+    printf("\n");
+    printf("median: %lld\n", median(t, tlen));
+    printf("average: %lld\n", average(t, tlen-1));
+    printf("\n");
+}
+
+int32_t main(void)
+{
+    uint32_t i;
+    int32_t ret;
+    int32_t j, mlen, smlen;
+    uint8_t m[MLEN];
+    uint8_t sm[MLEN + CRYPTO_BYTES];
+    uint8_t m2[MLEN + CRYPTO_BYTES];
+    uint8_t pk[CRYPTO_PUBLICKEYBYTES];
+    uint8_t sk[CRYPTO_SECRETKEYBYTES];
+    int64_t tkeygen[NTESTS], tsign[NTESTS], tverify[NTESTS];
+#ifdef DBENCH
+    int64_t t[7][NTESTS], dummy;
+    
+    memset(t, 0, sizeof(t));
+    tred = tadd = tmul = tround = tsample = tpack = tshake = &dummy;
+#endif
+    
+    timing_overhead = cpucycles_overhead();
+    
+    for(i = 0; i < NTESTS; ++i) {
+        randombytes(m, MLEN);
+        
+#ifdef DBENCH
+        tred = t[0] + i;
+        tadd = t[1] + i;
+        tmul = t[2] + i;
+        tround = t[3] + i;
+        tsample = t[4] + i;
+        tpack = t[5] + i;
+        tshake = t[6] + i;
+        tkeygen[i] = cpucycles_start();
+#endif
+        
+        dilithium_keypair(pk, sk);
+        
+#ifdef DBENCH
+        tkeygen[i] = cpucycles_stop() - tkeygen[i] - timing_overhead;
+        // tred = tadd = tmul = tround = tsample = tpack = tshake = &dummy;
+        tsign[i] = cpucycles_start();
+#endif
+        
+        dilithium_sign(sm, &smlen, m, MLEN, sk);
+#ifdef DBENCH
+        tsign[i] = cpucycles_stop() - tsign[i] - timing_overhead;
+        
+        tverify[i] = cpucycles_start();
+#endif
+        ret = dilithium_verify(m2, &mlen, sm, smlen, pk);
+#ifdef DBENCH
+        tverify[i] = cpucycles_stop() - tverify[i] - timing_overhead;
+#endif
+        if(ret) {
+            printf("Verification failed\n");
+            return -1;
+        }
+        
+        if(mlen != MLEN) {
+            printf("Message lengths don't match\n");
+            return -1;
+        }
+        
+        for(j = 0; j < mlen; ++j) {
+            if(m[j] != m2[j]) {
+                printf("Messages don't match\n");
+                return -1;
+            }
+        }
+    }
+    
+#ifdef DBENCH
+    print_results("keygen:", tkeygen, NTESTS);
+    print_results("sign: ", tsign, NTESTS);
+    print_results("verify: ", tverify, NTESTS);
+    
+    print_results("modular reduction:", t[0], NTESTS);
+    print_results("addition:", t[1], NTESTS);
+    print_results("multiplication:", t[2], NTESTS);
+    print_results("rounding:", t[3], NTESTS);
+    print_results("rejection sampling:", t[4], NTESTS);
+    print_results("packing:", t[5], NTESTS);
+    print_results("SHAKE:", t[6], NTESTS);
+#endif
+    
+    return 0;
 }

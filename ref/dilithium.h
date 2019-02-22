@@ -4,7 +4,7 @@
 #define CPUCYCLES_H
 
 #ifdef DBENCH
-#define DBENCH_START() unsigned long long time = cpucycles_start()
+#define DBENCH_START() uint64_t time = cpucycles_start()
 #define DBENCH_STOP(t) t += cpucycles_stop() - time - timing_overhead
 #else
 #define DBENCH_START()
@@ -14,9 +14,9 @@
 #ifdef USE_RDPMC  /* Needs echo 2 > /sys/devices/cpu/rdpmc */
 #ifdef SERIALIZE_RDC
 
-static inline unsigned long long cpucycles_start(void) {
-    const unsigned int ecx = (1U << 30) + 1;
-    unsigned long long result;
+static inline uint64_t cpucycles_start(void) {
+    const uint32_t ecx = (1U << 30) + 1;
+    uint64_t result;
     
     asm volatile("cpuid; movl %1,%%ecx; rdpmc; shlq $32,%%rdx; orq %%rdx,%%rax"
                  : "=&a" (result) : "r" (ecx) : "rbx", "rcx", "rdx");
@@ -24,9 +24,9 @@ static inline unsigned long long cpucycles_start(void) {
     return result;
 }
 
-static inline unsigned long long cpucycles_stop(void) {
-    const unsigned int ecx = (1U << 30) + 1;
-    unsigned long long result, dummy;
+static inline uint64_t cpucycles_stop(void) {
+    const uint32_t ecx = (1U << 30) + 1;
+    uint64_t result, dummy;
     
     asm volatile("rdpmc; shlq $32,%%rdx; orq %%rdx,%%rax; movq %%rax,%0; cpuid"
                  : "=&r" (result), "=c" (dummy) : "c" (ecx) : "rax", "rbx", "rdx");
@@ -36,9 +36,9 @@ static inline unsigned long long cpucycles_stop(void) {
 
 #else
 
-static inline unsigned long long cpucycles_start(void) {
-    const unsigned int ecx = (1U << 30) + 1;
-    unsigned long long result;
+static inline uint64_t cpucycles_start(void) {
+    const uint32_t ecx = (1U << 30) + 1;
+    uint64_t result;
     
     asm volatile("rdpmc; shlq $32,%%rdx; orq %%rdx,%%rax"
                  : "=a" (result) : "c" (ecx) : "rdx");
@@ -46,9 +46,9 @@ static inline unsigned long long cpucycles_start(void) {
     return result;
 }
 
-static inline unsigned long long cpucycles_stop(void) {
-    const unsigned int ecx = (1U << 30) + 1;
-    unsigned long long result;
+static inline uint64_t cpucycles_stop(void) {
+    const uint32_t ecx = (1U << 30) + 1;
+    uint64_t result;
     
     asm volatile("rdpmc; shlq $32,%%rdx; orq %%rdx,%%rax"
                  : "=a" (result) : "c" (ecx) : "rdx");
@@ -60,8 +60,8 @@ static inline unsigned long long cpucycles_stop(void) {
 #else
 #ifdef SERIALIZE_RDC
 
-static inline unsigned long long cpucycles_start(void) {
-    unsigned long long result;
+static inline uint64_t cpucycles_start(void) {
+    uint64_t result;
     
     asm volatile("cpuid; rdtsc; shlq $32,%%rdx; orq %%rdx,%%rax"
                  : "=a" (result) : : "%rbx", "%rcx", "%rdx");
@@ -69,8 +69,8 @@ static inline unsigned long long cpucycles_start(void) {
     return result;
 }
 
-static inline unsigned long long cpucycles_stop(void) {
-    unsigned long long result;
+static inline uint64_t cpucycles_stop(void) {
+    uint64_t result;
     
     asm volatile("rdtscp; shlq $32,%%rdx; orq %%rdx,%%rax; mov %%rax,%0; cpuid"
                  : "=r" (result) : : "%rax", "%rbx", "%rcx", "%rdx");
@@ -80,8 +80,8 @@ static inline unsigned long long cpucycles_stop(void) {
 
 #else
 
-static inline unsigned long long cpucycles_start(void) {
-    unsigned long long result;
+static inline uint64_t cpucycles_start(void) {
+    uint64_t result;
     
     asm volatile("rdtsc; shlq $32,%%rdx; orq %%rdx,%%rax"
                  : "=a" (result) : : "%rdx");
@@ -89,8 +89,8 @@ static inline unsigned long long cpucycles_start(void) {
     return result;
 }
 
-static inline unsigned long long cpucycles_stop(void) {
-    unsigned long long result;
+static inline uint64_t cpucycles_stop(void) {
+    uint64_t result;
     
     asm volatile("rdtsc; shlq $32,%%rdx; orq %%rdx,%%rax"
                  : "=a" (result) : : "%rdx");
@@ -101,7 +101,7 @@ static inline unsigned long long cpucycles_stop(void) {
 #endif
 #endif
 
-unsigned long long cpucycles_overhead(void);
+int64_t cpucycles_overhead(void);
 
 #endif
 
@@ -113,30 +113,30 @@ unsigned long long cpucycles_overhead(void);
 #define SHAKE256_RATE 136
 
 void shake128_absorb(uint64_t *s,
-                     const unsigned char *input,
-                     unsigned long long inlen);
+                     const uint8_t *input,
+                     int32_t inlen);
 
-void shake128_squeezeblocks(unsigned char *output,
-                            unsigned long nblocks,
+void shake128_squeezeblocks(uint8_t *output,
+                            int32_t nblocks,
                             uint64_t *s);
 
 void shake256_absorb(uint64_t *s,
-                     const unsigned char *input,
-                     unsigned long long inlen);
+                     const uint8_t *input,
+                     int32_t inlen);
 
-void shake256_squeezeblocks(unsigned char *output,
-                            unsigned long nblocks,
+void shake256_squeezeblocks(uint8_t *output,
+                            int32_t nblocks,
                             uint64_t *s);
 
-void shake128(unsigned char *output,
-              unsigned long long outlen,
-              const unsigned char *input,
-              unsigned long long inlen);
+void shake128(uint8_t *output,
+              int32_t outlen,
+              const uint8_t *input,
+              int32_t inlen);
 
-void shake256(unsigned char *output,
-              unsigned long long outlen,
-              const unsigned char *input,
-              unsigned long long inlen);
+void shake256(uint8_t *output,
+              int32_t outlen,
+              const uint8_t *input,
+              int32_t inlen);
 
 #endif
 
@@ -224,7 +224,7 @@ void poly_freeze(poly *a);
 void poly_add(poly *c, const poly *a, const poly *b);
 void poly_sub(poly *c, const poly *a, const poly *b);
 void poly_neg(poly *a);
-void poly_shiftl(poly *a, unsigned int k);
+void poly_shiftl(poly *a, uint32_t k);
 
 void poly_ntt(poly *a);
 void poly_invntt_montgomery(poly *a);
@@ -232,31 +232,31 @@ void poly_pointwise_invmontgomery(poly *c, const poly *a, const poly *b);
 
 void poly_power2round(poly *a1, poly *a0, const poly *a);
 void poly_decompose(poly *a1, poly *a0, const poly *a);
-unsigned int poly_make_hint(poly *h, const poly *a, const poly *b);
+uint32_t poly_make_hint(poly *h, const poly *a, const poly *b);
 void poly_use_hint(poly *a, const poly *b, const poly *h);
 
 int  poly_chknorm(const poly *a, uint32_t B);
-void poly_uniform(poly *a, const unsigned char *buf);
+void poly_uniform(poly *a, const uint8_t *buf);
 void poly_uniform_eta(poly *a,
-                      const unsigned char seed[SEEDBYTES],
-                      unsigned char nonce);
+                      const uint8_t seed[SEEDBYTES],
+                      uint8_t nonce);
 void poly_uniform_gamma1m1(poly *a,
-                           const unsigned char seed[SEEDBYTES + CRHBYTES],
+                           const uint8_t seed[SEEDBYTES + CRHBYTES],
                            uint16_t nonce);
 
-void polyeta_pack(unsigned char *r, const poly *a);
-void polyeta_unpack(poly *r, const unsigned char *a);
+void polyeta_pack(uint8_t *r, const poly *a);
+void polyeta_unpack(poly *r, const uint8_t *a);
 
-void polyt1_pack(unsigned char *r, const poly *a);
-void polyt1_unpack(poly *r, const unsigned char *a);
+void polyt1_pack(uint8_t *r, const poly *a);
+void polyt1_unpack(poly *r, const uint8_t *a);
 
-void polyt0_pack(unsigned char *r, const poly *a);
-void polyt0_unpack(poly *r, const unsigned char *a);
+void polyt0_pack(uint8_t *r, const poly *a);
+void polyt0_unpack(poly *r, const uint8_t *a);
 
-void polyz_pack(unsigned char *r, const poly *a);
-void polyz_unpack(poly *r, const unsigned char *a);
+void polyz_pack(uint8_t *r, const poly *a);
+void polyz_unpack(poly *r, const uint8_t *a);
 
-void polyw1_pack(unsigned char *r, const poly *a);
+void polyw1_pack(uint8_t *r, const poly *a);
 #endif
 #ifndef POLYVEC_H
 #define POLYVEC_H
@@ -294,7 +294,7 @@ void polyveck_freeze(polyveck *v);
 
 void polyveck_add(polyveck *w, const polyveck *u, const polyveck *v);
 void polyveck_sub(polyveck *w, const polyveck *u, const polyveck *v);
-void polyveck_shiftl(polyveck *v, unsigned int k);
+void polyveck_shiftl(polyveck *v, uint32_t k);
 
 void polyveck_ntt(polyveck *v);
 void polyveck_invntt_montgomery(polyveck *v);
@@ -303,7 +303,7 @@ int polyveck_chknorm(const polyveck *v, uint32_t B);
 
 void polyveck_power2round(polyveck *v1, polyveck *v0, const polyveck *v);
 void polyveck_decompose(polyveck *v1, polyveck *v0, const polyveck *v);
-unsigned int polyveck_make_hint(polyveck *h,
+uint32_t polyveck_make_hint(polyveck *h,
                                 const polyveck *u,
                                 const polyveck *v);
 void polyveck_use_hint(polyveck *w, const polyveck *v, const polyveck *h);
@@ -326,29 +326,29 @@ void invntt_frominvmont(uint32_t p[N]);
 //#include "params.h"
 //#include "polyvec.h"
 
-void pack_pk(unsigned char pk[CRYPTO_PUBLICKEYBYTES],
-             const unsigned char rho[SEEDBYTES], const polyveck *t1);
-void pack_sk(unsigned char sk[CRYPTO_SECRETKEYBYTES],
-             const unsigned char rho[SEEDBYTES],
-             const unsigned char key[SEEDBYTES],
-             const unsigned char tr[CRHBYTES],
+void pack_pk(uint8_t pk[CRYPTO_PUBLICKEYBYTES],
+             const uint8_t rho[SEEDBYTES], const polyveck *t1);
+void pack_sk(uint8_t sk[CRYPTO_SECRETKEYBYTES],
+             const uint8_t rho[SEEDBYTES],
+             const uint8_t key[SEEDBYTES],
+             const uint8_t tr[CRHBYTES],
              const polyvecl *s1,
              const polyveck *s2,
              const polyveck *t0);
-void pack_sig(unsigned char sig[CRYPTO_BYTES],
+void pack_sig(uint8_t sig[CRYPTO_BYTES],
               const polyvecl *z, const polyveck *h, const poly *c);
 
-void unpack_pk(unsigned char rho[SEEDBYTES], polyveck *t1,
-               const unsigned char pk[CRYPTO_PUBLICKEYBYTES]);
-void unpack_sk(unsigned char rho[SEEDBYTES],
-               unsigned char key[SEEDBYTES],
-               unsigned char tr[CRHBYTES],
+void unpack_pk(uint8_t rho[SEEDBYTES], polyveck *t1,
+               const uint8_t pk[CRYPTO_PUBLICKEYBYTES]);
+void unpack_sk(uint8_t rho[SEEDBYTES],
+               uint8_t key[SEEDBYTES],
+               uint8_t tr[CRHBYTES],
                polyvecl *s1,
                polyveck *s2,
                polyveck *t0,
-               const unsigned char sk[CRYPTO_SECRETKEYBYTES]);
+               const uint8_t sk[CRYPTO_SECRETKEYBYTES]);
 int unpack_sig(polyvecl *z, polyveck *h, poly *c,
-                const unsigned char sig[CRYPTO_BYTES]);
+                const uint8_t sig[CRYPTO_BYTES]);
 
 #endif
 #ifndef REDUCE_H
@@ -379,8 +379,8 @@ uint32_t freeze(uint32_t a);
 
 uint32_t power2round(const uint32_t a, uint32_t *a0);
 uint32_t decompose(uint32_t a, uint32_t *a0);
-unsigned int make_hint(const uint32_t a, const uint32_t b);
-uint32_t use_hint(const uint32_t a, const unsigned int hint);
+uint32_t make_hint(const uint32_t a, const uint32_t b);
+uint32_t use_hint(const uint32_t a, const uint32_t hint);
 
 #endif
 #ifndef SIGN_H
@@ -390,19 +390,19 @@ uint32_t use_hint(const uint32_t a, const unsigned int hint);
 //#include "poly.h"
 //#include "polyvec.h"
 
-void expand_mat(polyvecl mat[K], const unsigned char rho[SEEDBYTES]);
-void challenge(poly *c, const unsigned char mu[CRHBYTES],
+void expand_mat(polyvecl mat[K], const uint8_t rho[SEEDBYTES]);
+void challenge(poly *c, const uint8_t mu[CRHBYTES],
                const polyveck *w1);
 
-int crypto_sign_keypair(unsigned char *pk, unsigned char *sk);
+int crypto_sign_keypair(uint8_t *pk, uint8_t *sk);
 
-int crypto_sign(unsigned char *sm, unsigned long long *smlen,
-                const unsigned char *msg, unsigned long long len,
-                const unsigned char *sk);
+int crypto_sign(uint8_t *sm, int32_t *smlen,
+                const uint8_t *msg, int32_t len,
+                const uint8_t *sk);
 
-int crypto_sign_open(unsigned char *m, unsigned long long *mlen,
-                     const unsigned char *sm, unsigned long long smlen,
-                     const unsigned char *pk);
+int crypto_sign_open(uint8_t *m, int32_t *mlen,
+                     const uint8_t *sm, int32_t smlen,
+                     const uint8_t *pk);
 
 #endif
 
@@ -461,14 +461,14 @@ CRYPTO_BYTES size error
 
 #define CRYPTO_ALGNAME "Dilithium"
 
-int crypto_sign_keypair(unsigned char *pk, unsigned char *sk);
+int crypto_sign_keypair(uint8_t *pk, uint8_t *sk);
 
-int crypto_sign(unsigned char *sm, unsigned long long *smlen,
-                const unsigned char *msg, unsigned long long len,
-                const unsigned char *sk);
+int crypto_sign(uint8_t *sm, int32_t *smlen,
+                const uint8_t *msg, int32_t len,
+                const uint8_t *sk);
 
-int crypto_sign_open(unsigned char *m, unsigned long long *mlen,
-                     const unsigned char *sm, unsigned long long smlen,
-                     const unsigned char *pk);
+int crypto_sign_open(uint8_t *m, int32_t *mlen,
+                     const uint8_t *sm, int32_t smlen,
+                     const uint8_t *pk);
 
 #endif

@@ -2760,11 +2760,11 @@ static void print_results(const char *s, int64_t *t, size_t tlen)
     for(i=0;i<tlen-1;i++)
     {
         t[i] = t[i+1] - t[i];
-        fprintf(stderr,"%lld ", t[i]);
+        //fprintf(stderr,"%lld ", (long long)t[i]);
     }
     printf("\n");
-    printf("median: %lld\n", median(t, tlen));
-    printf("average: %lld\n", average(t, tlen-1));
+    printf("median: %lld\n", (long long)median(t, tlen));
+    printf("average: %lld\n", (long long)average(t, tlen-1));
     printf("\n");
 }
 

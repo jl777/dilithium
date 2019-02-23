@@ -2722,7 +2722,7 @@ int dilithium_verify(uint8_t *m,
 #include <stdlib.h>
 
 #define MLEN 59
-#define NTESTS 5000
+#define NTESTS 10000
 
 int64_t timing_overhead;
 #ifdef DBENCH
@@ -2788,8 +2788,8 @@ int32_t main(void)
     
     timing_overhead = cpucycles_overhead();
     
-    for(i = 0; i < NTESTS; ++i) {
-        randombytes(m, MLEN);
+    for(i = 0; i < NTESTS; ++i)
+    {
         
 #ifdef DBENCH
         tred = t[0] + i;
@@ -2802,15 +2802,15 @@ int32_t main(void)
         tkeygen[i] = cpucycles_start();
 #endif
         
-        dilithium_keypair(pk, sk);
-        
+        dilithium_keypair(pk, sk); // 1.3
 #ifdef DBENCH
         tkeygen[i] = cpucycles_stop() - tkeygen[i] - timing_overhead;
         // tred = tadd = tmul = tround = tsample = tpack = tshake = &dummy;
         tsign[i] = cpucycles_start();
 #endif
-        
-        dilithium_sign(sm, &smlen, m, MLEN, sk);
+        randombytes(m, MLEN); // 1.27
+
+        dilithium_sign(sm, &smlen, m, MLEN, sk); // 7.2
 #ifdef DBENCH
         tsign[i] = cpucycles_stop() - tsign[i] - timing_overhead;
         
